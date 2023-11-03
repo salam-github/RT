@@ -1,0 +1,15 @@
+[package]
+name = "rt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+glam = { version = "0.24.1", features = ["rand"] }
+indicatif = { version = "0.17.6", features = ["rayon"] }
+itertools = "0.11.0"
+rand = "0.8.5"
+rayon = "1.7.0"
+gtk = "0.9.0"
+glib = "0.10.3"
