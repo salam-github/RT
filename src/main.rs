@@ -126,7 +126,7 @@ fn launch_gui() {
     let app_state = Rc::new(RefCell::new(AppState {
         object_configs: Vec::new(),
     }));
-    
+
     gtk::init().expect("Failed to initialize GTK.");
 
     let object_selector = Rc::new(RefCell::new(ComboBoxText::new()));
@@ -233,13 +233,6 @@ fn launch_gui() {
     let height_entry = Entry::new();
     height_entry.set_placeholder_text(Some("Height"));
     vbox.pack_start(&height_entry, false, false, 0);
-
-    let object_selector = object_selector.clone();
-    let pos_x_entry = pos_x_entry.clone();
-    let pos_y_entry = pos_y_entry.clone();
-    let pos_z_entry = pos_z_entry.clone();
-    let radius_entry = radius_entry.clone();
-    let material_selector = material_selector.clone();
 
     // Connect the changed signal to the Entry to print its content when it changes
     pos_x_entry.borrow().connect_changed(|entry| {
