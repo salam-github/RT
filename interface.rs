@@ -1,101 +1,162 @@
 use glib::clone;
 use glib::signal::Inhibit;
 use gtk::prelude::*;
-use gtk::{Box as GtkBox, Button, Entry, Orientation, Separator, Window, WindowType, Scale};
+use gtk::{
+    Box as GtkBox, Button, ComboBoxText, CssProvider, Entry, Orientation, Scale, Separator, Window,
+    WindowType,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 
 struct AppState {
-    object_configs: Vec<ObjectConfig>,
+    spheres: Vec<SphereConfig>,
+    cylinders: Vec<CylinderConfig>,
+    cubes: Vec<CubeConfig>,
+    flat_plane: Vec<FlatPlaneConfig>,
 }
-
+#[allow(dead_code)]
 struct ObjectConfig {
     pos_x_entry: Rc<RefCell<Entry>>,
     pos_y_entry: Rc<RefCell<Entry>>,
     pos_z_entry: Rc<RefCell<Entry>>,
     radius_entry: Rc<RefCell<Entry>>,
-    // material_selector: Rc<RefCell<ComboBoxText>>,
+    material_selector: Rc<RefCell<ComboBoxText>>,
 }
 
-// TODO:Remove dead_code
-#[allow(dead_code)]
-struct GuiData {
-    // object_type: String,
-    object_position: (f64, f64, f64),
-    object_radius: f64,
-    // object_material: Material,
-    camera_position: (f64, f64, f64),
-    camera_look_at: (f64, f64, f64),
-    image_width: u32,
-    aspect_ratio: f64,
+struct SphereConfig {
+    pos_x_entry: Rc<RefCell<Entry>>,
+    pos_y_entry: Rc<RefCell<Entry>>,
+    pos_z_entry: Rc<RefCell<Entry>>,
+    radius_entry: Rc<RefCell<Entry>>,
+    material_selector: Rc<RefCell<ComboBoxText>>,
+    color_button: Rc<RefCell<gtk::ColorButton>>,
 }
 
+struct CylinderConfig {
+    pos_x_entry: Rc<RefCell<Entry>>,
+    pos_y_entry: Rc<RefCell<Entry>>,
+    pos_z_entry: Rc<RefCell<Entry>>,
+    radius_entry: Rc<RefCell<Entry>>,
+    material_selector: Rc<RefCell<ComboBoxText>>,
+    height_entry: Rc<RefCell<Entry>>,
+}
 
+struct CubeConfig {
+    pos_x_entry: Rc<RefCell<Entry>>,
+    pos_y_entry: Rc<RefCell<Entry>>,
+    pos_z_entry: Rc<RefCell<Entry>>,
+    radius_entry: Rc<RefCell<Entry>>,
+    material_selector: Rc<RefCell<ComboBoxText>>,
+}
+
+struct FlatPlaneConfig {
+    pos_x_entry: Rc<RefCell<Entry>>,
+    pos_y_entry: Rc<RefCell<Entry>>,
+    pos_z_entry: Rc<RefCell<Entry>>,
+    radius_entry: Rc<RefCell<Entry>>,
+    material_selector: Rc<RefCell<ComboBoxText>>,
+}
 
 pub fn launch_gui() {
     let app_state = Rc::new(RefCell::new(AppState {
-        object_configs: Vec::new(),
+        spheres: Vec::new(),
+        cylinders: Vec::new(),
+        cubes: Vec::new(),
+        flat_plane: Vec::new(),
     }));
 
     gtk::init().expect("Failed to initialize GTK.");
 
-    // let object_selector = Rc::new(RefCell::new(ComboBoxText::new()));
-    let pos_x_entry = Rc::new(RefCell::new(Entry::new()));
-    let pos_y_entry = Rc::new(RefCell::new(Entry::new()));
-    let pos_z_entry = Rc::new(RefCell::new(Entry::new())); // Added Z position entry
-    let radius_entry = Rc::new(RefCell::new(Entry::new()));
-    // let material_selector = Rc::new(RefCell::new(ComboBoxText::new()));
-
-    pos_x_entry.borrow().connect_changed(|entry| {
-        let text = entry.get_text().to_string();
-        println!("X Entry changed (fn launch_gui): {}", text);
-    });
+    // Create a CSS provider
+    let provider = CssProvider::new();
+    provider
+        .load_from_path("src/gui/style.css")
+        .expect("Failed to load CSS");
 
     let window = Window::new(WindowType::Toplevel);
     window.set_title("Ray Tracing Settings");
-    window.set_default_size(600, 600);
+    window.set_default_size(900, 900);
+    window
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    let scrolled_window = gtk::ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
 
     let vbox = GtkBox::new(Orientation::Vertical, 10);
+    vbox.set_border_width(10);
+    vbox.set_spacing(10);
+
     let vbox_clone = vbox.clone();
-    
-    let vbox = GtkBox::new(Orientation::Vertical, 10);
+
+    scrolled_window.add(&vbox);
+    window.add(&scrolled_window);
 
     let render_button = Button::with_label("Render picture");
     vbox.pack_start(&render_button, false, false, 0);
-    
+    render_button
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     // Create a horizontal box for the side-by-side buttons
     let hbox = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    
+
     let add_sphere_button = Button::with_label("Add Sphere");
     hbox.pack_start(&add_sphere_button, false, false, 0);
-    
+    add_sphere_button
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     let add_cylinder_button = Button::with_label("Add Cylinder");
     hbox.pack_start(&add_cylinder_button, false, false, 0);
-    
+    add_cylinder_button
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    let add_cube_button = Button::with_label("Add Cube");
+    hbox.pack_start(&add_cube_button, false, false, 0);
+    add_cube_button
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    let add_flat_plane_button = Button::with_label("Add Flat Plane");
+    hbox.pack_start(&add_flat_plane_button, false, false, 0);
+    add_flat_plane_button
+        .get_style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     // Add the horizontal box to the vertical box
     vbox.pack_start(&hbox, false, false, 0);
 
-    // let pos_x_entry = Rc::new(RefCell::new(Entry::new()));
+    let flow_box = gtk::FlowBox::new();
+    flow_box.set_valign(gtk::Align::Start);
+    flow_box.set_max_children_per_line(10); // Adjust as needed
+    flow_box.set_selection_mode(gtk::SelectionMode::None);
 
-    add_sphere_button.connect_clicked(clone!(@strong app_state => move |_| {
+    add_sphere_button.connect_clicked(clone!(@strong flow_box, @strong app_state => move |_| {
+        let sphere_count = app_state.borrow().spheres.len();
+        let sphere_section = create_sphere_section(app_state.clone(), sphere_count + 1);
+        flow_box.add(&sphere_section);
+        flow_box.show_all();
+    }));
 
-    app_state.borrow_mut().object_configs.push(ObjectConfig {
-        pos_x_entry: pos_x_entry.clone(),
-        pos_y_entry: pos_y_entry.clone(),
-        pos_z_entry: pos_z_entry.clone(),
-        radius_entry: radius_entry.clone(),
-        // material_selector: material_selector.clone(),
-    });
-    
+    add_cylinder_button.connect_clicked(clone!(@strong flow_box, @strong app_state => move |_| {
+        let cylinder_count = app_state.borrow().cylinders.len();
+        let cylinder_section = create_cylinder_section(app_state.clone(), cylinder_count + 1);
+        flow_box.add(&cylinder_section);
+        flow_box.show_all();
+    }));
 
+    add_cube_button.connect_clicked(clone!(@strong vbox_clone, @strong app_state => move |_| {
+        let cube_count = app_state.borrow().cubes.len();
+        let cube_section = create_cube_section(app_state.clone(), cube_count + 1);
+        vbox_clone.pack_start(&cube_section, false, false, 0);
+        vbox_clone.show_all();
+    }));
 
-        // Ensure GUI updates have been processed before reading the value
-        while gtk::events_pending() {
-            gtk::main_iteration();
-        }
-
-        println!("x text: {:?}", pos_x_entry.borrow().get_text());
-
+    add_flat_plane_button.connect_clicked(clone!(@strong vbox_clone, @strong app_state => move |_| {
+        let flat_plane_count = app_state.borrow().flat_plane.len();
+        let flat_plane_section = create_flat_plane_section(app_state.clone(), flat_plane_count + 1);
+        vbox_clone.pack_start(&flat_plane_section, false, false, 0);
         vbox_clone.show_all();
     }));
 
@@ -135,45 +196,73 @@ pub fn launch_gui() {
     let height_entry = Entry::new();
     height_entry.set_placeholder_text(Some("Height"));
     vbox.pack_start(&height_entry, false, false, 0);
+    vbox.pack_start(&flow_box, false, false, 0);
 
+    let brightness_entry_clone = brightness_entry.clone();
+    let cam_x_entry_clone = cam_x_entry.clone();
+    let cam_y_entry_clone = cam_y_entry.clone();
+    let cam_angle_entry_clone = cam_angle_entry.clone();
+    let width_entry_clone = width_entry.clone();
+    let height_entry_clone = height_entry.clone();
 
-    //Button to render the scene with the given parameters from the GUI on click
+    // Render Button
     render_button.connect_clicked(clone!(@strong app_state => move |_| {
+        let app_state_borrowed = app_state.borrow();
 
-        // Iterate over all stored object configurations
-        for object_config in &app_state.borrow().object_configs {
-            // Read values from each object configuration
-            let pos_x = validate_and_parse_entry(&object_config.pos_x_entry.borrow(), 0.0, "X position");
-            let pos_y = validate_and_parse_entry(&object_config.pos_y_entry.borrow(), 0.0, "Y position");
-            let pos_z = validate_and_parse_entry(&object_config.pos_z_entry.borrow(), 0.0, "Z position");
-            let radius = validate_and_parse_entry(&object_config.radius_entry.borrow(), 1.0, "Radius");
+        // Iterate through all spheres and print their properties
+        for (index, sphere) in app_state_borrowed.spheres.iter().enumerate() {
+            let pos_x = sphere.pos_x_entry.borrow().get_text().to_string();
+            let pos_y = sphere.pos_y_entry.borrow().get_text().to_string();
+            let pos_z = sphere.pos_z_entry.borrow().get_text().to_string();
+            let radius = sphere.radius_entry.borrow().get_text().to_string();
+            let material = sphere.material_selector.borrow().get_active_text().unwrap_or_else(|| "Lambertian".into());
+            let gdk_color = sphere.color_button.borrow().get_rgba();
+            let (r, g, b) = (gdk_color.red * 255.0, gdk_color.green * 255.0, gdk_color.blue * 255.0);
 
-            // Create GuiData for the current object
-            let gui_data = GuiData {
-                object_position: (pos_x, pos_y, pos_z),
-                object_radius: radius,
-            camera_position: (
-                cam_x_entry.get_text().parse().unwrap_or(13.0),
-                cam_y_entry.get_text().parse().unwrap_or(2.0),
-                cam_angle_entry.get_text().parse().unwrap_or(3.0), // Adjust as needed
-            ),
-            camera_look_at: (0.0, 0.0, 0.0), // Adjust as needed
-            image_width: width_entry.get_text().parse().unwrap_or(400),
-            aspect_ratio: 16.0 / 9.0, // Adjust as needed
-        };
+            println!("Sphere {}: X: {}, Y: {}, Z: {}, Radius: {}, Material: {}, Color: RGB({}, {}, {})", 
+             index + 1, pos_x, pos_y, pos_z, radius, material, r as u8, g as u8, b as u8);
+        }
 
-        // Log the rendering information
-        println!("Rendering with the following parameters:");
-        // println!("Object Type: {:?}", gui_data.object_type);
-        println!("Object Position: {:?}", gui_data.object_position);
-        println!("Object Radius: {:?}", gui_data.object_radius);
-        // println!("Object Material: {:?}", gui_data.object_material);
-        println!("Image Width: {:?}", gui_data.image_width);
-        //println!("Raw X position2: {:?}", pos_x_entry.borrow().get_text());
-    }
+        for (index, cylinder) in app_state_borrowed.cylinders.iter().enumerate() {
+            let pos_x = cylinder.pos_x_entry.borrow().get_text().to_string();
+            let pos_y = cylinder.pos_y_entry.borrow().get_text().to_string();
+            let pos_z = cylinder.pos_z_entry.borrow().get_text().to_string();
+            let radius = cylinder.radius_entry.borrow().get_text().to_string();
+            let height = cylinder.height_entry.borrow().get_text().to_string();
+            let material = cylinder.material_selector.borrow().get_active_text().unwrap_or_else(|| "Lambertian".into());
+
+            println!("Cylinder {}: X: {}, Y: {}, Z: {}, Radius: {}, Height: {}, Material: {}", index + 1, pos_x, pos_y, pos_z, radius, height, material);
+        }
+
+        for (index, cube) in app_state_borrowed.cubes.iter().enumerate() {
+            let pos_x = cube.pos_x_entry.borrow().get_text().to_string();
+            let pos_y = cube.pos_y_entry.borrow().get_text().to_string();
+            let pos_z = cube.pos_z_entry.borrow().get_text().to_string();
+            let radius = cube.radius_entry.borrow().get_text().to_string();
+            let material = cube.material_selector.borrow().get_active_text().unwrap_or_else(|| "Lambertian".into());
+
+            println!("Cube {}: X: {}, Y: {}, Z: {}, Radius: {}, Material: {}", index + 1, pos_x, pos_y, pos_z, radius, material);
+        }
+
+        for (index, flat_plane) in app_state_borrowed.flat_plane.iter().enumerate() {
+            let pos_x = flat_plane.pos_x_entry.borrow().get_text().to_string();
+            let pos_y = flat_plane.pos_y_entry.borrow().get_text().to_string();
+            let pos_z = flat_plane.pos_z_entry.borrow().get_text().to_string();
+            let radius = flat_plane.radius_entry.borrow().get_text().to_string();
+            let material = flat_plane.material_selector.borrow().get_active_text().unwrap_or_else(|| "Lambertian".into());
+
+            println!("Flat Plane {}: X: {}, Y: {}, Z: {}, Radius: {}, Material: {}", index + 1, pos_x, pos_y, pos_z, radius, material);
+        }
+        println!("Brightness: {}", brightness_entry_clone.get_value());
+        println!("Camera X Position: {}", cam_x_entry_clone.get_text());
+        println!("Camera Y Position: {}", cam_y_entry_clone.get_text());
+        println!("Camera Angle: {}", cam_angle_entry_clone.get_text());
+        println!("Resolution Width: {}", width_entry_clone.get_text());
+        println!("Resolution Height: {}", height_entry_clone.get_text());
+
+
     }));
 
-    window.add(&vbox);
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
@@ -182,7 +271,7 @@ pub fn launch_gui() {
     window.show_all();
     gtk::main();
 }
-
+#[allow(dead_code)]
 // // Function to validate and parse position entries
 fn validate_and_parse_entry(entry: &gtk::Entry, default_value: f64, label: &str) -> f64 {
     let text = entry.get_text().trim().to_string();
@@ -196,4 +285,259 @@ fn validate_and_parse_entry(entry: &gtk::Entry, default_value: f64, label: &str)
             default_value // Use the default value if parsing fails
         }
     }
+}
+
+fn create_sphere_section(app_state: Rc<RefCell<AppState>>, sphere_count: usize) -> gtk::Widget {
+    let provider = CssProvider::new();
+    provider
+        .load_from_path("src/gui/style.css")
+        .expect("Failed to load CSS");
+
+    let grid = gtk::Grid::new();
+    grid.set_column_spacing(10); // Adjust the spacing as needed
+
+    let label_text = format!("Sphere {}", sphere_count);
+    let sphere_label = gtk::Label::new(Some(&label_text));
+    grid.attach(&sphere_label, 0, 0, 1, 1); // Column 0, Row 0
+
+    let pos_x_entry = Entry::new();
+    pos_x_entry.set_placeholder_text(Some("X Position"));
+    grid.attach(&pos_x_entry, 1, 0, 1, 1); // Column 1, Row 0
+
+    let pos_y_entry = Entry::new();
+    pos_y_entry.set_placeholder_text(Some("Y Position"));
+    grid.attach(&pos_y_entry, 1, 1, 1, 1); // Column 1, Row 1
+
+    let pos_z_entry = Entry::new();
+    pos_z_entry.set_placeholder_text(Some("Z Position"));
+    grid.attach(&pos_z_entry, 1, 2, 1, 1); // Column 1, Row 2
+
+    let radius_entry = Entry::new();
+    radius_entry.set_placeholder_text(Some("Radius"));
+    grid.attach(&radius_entry, 1, 3, 1, 1); // Column 1, Row 3
+
+    // Apply styles to entries
+    let entries = vec![&pos_x_entry, &pos_y_entry, &pos_z_entry, &radius_entry];
+    for entry in entries {
+        let style_context = entry.get_style_context();
+        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+    }
+
+    let material_selector = ComboBoxText::new();
+    material_selector.append_text("Lambertian");
+    material_selector.append_text("Metal");
+    material_selector.append_text("Dielectric");
+    material_selector.set_active(Some(0));
+    grid.attach(&material_selector, 1, 4, 1, 1); // Column 1, Row 4
+
+    // Apply styles to ComboBoxText
+    let style_context = material_selector.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+
+    let color_button = gtk::ColorButton::new();
+    grid.attach(&color_button, 1, 5, 1, 1); // Column 1, Row 5
+
+    let sphere_config = SphereConfig {
+        pos_x_entry: Rc::new(RefCell::new(pos_x_entry)),
+        pos_y_entry: Rc::new(RefCell::new(pos_y_entry)),
+        pos_z_entry: Rc::new(RefCell::new(pos_z_entry)),
+        radius_entry: Rc::new(RefCell::new(radius_entry)),
+        material_selector: Rc::new(RefCell::new(material_selector)),
+        color_button: Rc::new(RefCell::new(color_button)),
+    };
+    app_state.borrow_mut().spheres.push(sphere_config);
+
+    grid.upcast::<gtk::Widget>() // Return the grid as a generic widget
+}
+
+fn create_cylinder_section(app_state: Rc<RefCell<AppState>>, cylinder_count: usize) -> gtk::Widget {
+    let provider = CssProvider::new();
+    provider
+        .load_from_path("src/gui/style.css")
+        .expect("Failed to load CSS");
+
+    let grid = gtk::Grid::new();
+    grid.set_column_spacing(10); // Adjust the spacing as needed
+
+    let label_text = format!("Cylinder {}", cylinder_count);
+    let cylinder_label = gtk::Label::new(Some(&label_text));
+    grid.attach(&cylinder_label, 0, 0, 1, 1); // Column 0, Row 0
+
+    let pos_x_entry = Entry::new();
+    pos_x_entry.set_placeholder_text(Some("X Position"));
+    grid.attach(&pos_x_entry, 1, 0, 1, 1); // Column 1, Row 0
+
+    let pos_y_entry = Entry::new();
+    pos_y_entry.set_placeholder_text(Some("Y Position"));
+    grid.attach(&pos_y_entry, 1, 1, 1, 1); // Column 1, Row 1
+
+    let pos_z_entry = Entry::new();
+    pos_z_entry.set_placeholder_text(Some("Z Position"));
+    grid.attach(&pos_z_entry, 1, 2, 1, 1); // Column 1, Row 2
+
+    let radius_entry = Entry::new();
+    radius_entry.set_placeholder_text(Some("Radius"));
+    grid.attach(&radius_entry, 1, 3, 1, 1); // Column 1, Row 3
+
+    let height_entry = Entry::new();
+    height_entry.set_placeholder_text(Some("Height"));
+    grid.attach(&height_entry, 1, 4, 1, 1); // Column 1, Row 4
+
+    // Apply styles to entries
+    let entries = vec![
+        &pos_x_entry,
+        &pos_y_entry,
+        &pos_z_entry,
+        &radius_entry,
+        &height_entry,
+    ];
+    for entry in entries {
+        let style_context = entry.get_style_context();
+        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+    }
+
+    let material_selector = ComboBoxText::new();
+    material_selector.append_text("Lambertian");
+    material_selector.append_text("Metal");
+    material_selector.append_text("Dielectric");
+    material_selector.set_active(Some(0));
+    grid.attach(&material_selector, 1, 5, 1, 1); // Column 1, Row 5
+
+    // Apply styles to ComboBoxText
+    let style_context = material_selector.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+
+    let cylinder_config = CylinderConfig {
+        pos_x_entry: Rc::new(RefCell::new(pos_x_entry)),
+        pos_y_entry: Rc::new(RefCell::new(pos_y_entry)),
+        pos_z_entry: Rc::new(RefCell::new(pos_z_entry)),
+        radius_entry: Rc::new(RefCell::new(radius_entry)),
+        material_selector: Rc::new(RefCell::new(material_selector)),
+        height_entry: Rc::new(RefCell::new(height_entry)),
+    };
+    app_state.borrow_mut().cylinders.push(cylinder_config);
+
+    grid.upcast::<gtk::Widget>() // Return the grid as a generic widget
+}
+
+//Todo: refine this function
+fn create_cube_section(app_state: Rc<RefCell<AppState>>, cube_count: usize) -> gtk::Box {
+    let provider = CssProvider::new();
+    provider
+        .load_from_path("src/gui/style.css")
+        .expect("Failed to load CSS");
+
+    let cube_section = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    let label_text = format!("Cube {}", cube_count);
+    let cube_label = gtk::Label::new(Some(&label_text));
+    cube_section.pack_start(&cube_label, false, false, 0);
+    let style_context = cube_label.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    let pos_x_entry = Entry::new();
+    pos_x_entry.set_placeholder_text(Some("X Position"));
+    cube_section.pack_start(&pos_x_entry, false, false, 0);
+
+    let pos_y_entry = Entry::new();
+    pos_y_entry.set_placeholder_text(Some("Y Position"));
+    cube_section.pack_start(&pos_y_entry, false, false, 0);
+
+    let pos_z_entry = Entry::new();
+    pos_z_entry.set_placeholder_text(Some("Z Position"));
+    cube_section.pack_start(&pos_z_entry, false, false, 0);
+
+    let radius_entry = Entry::new();
+    radius_entry.set_placeholder_text(Some("Radius"));
+    cube_section.pack_start(&radius_entry, false, false, 0);
+
+    // Apply styles to entries
+    let entries = vec![&pos_x_entry, &pos_y_entry, &pos_z_entry, &radius_entry];
+    for entry in entries {
+        let style_context = entry.get_style_context();
+        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+    }
+
+    let material_selector = ComboBoxText::new();
+    material_selector.append_text("Lambertian");
+    material_selector.append_text("Metal");
+    material_selector.append_text("Dielectric");
+    material_selector.set_active(Some(0));
+    cube_section.pack_start(&material_selector, false, false, 0);
+
+    // Apply styles to ComboBoxText
+    let style_context = material_selector.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+
+    let cube_config = CubeConfig {
+        pos_x_entry: Rc::new(RefCell::new(pos_x_entry)),
+        pos_y_entry: Rc::new(RefCell::new(pos_y_entry)),
+        pos_z_entry: Rc::new(RefCell::new(pos_z_entry)),
+        radius_entry: Rc::new(RefCell::new(radius_entry)),
+        material_selector: Rc::new(RefCell::new(material_selector)),
+    };
+    app_state.borrow_mut().cubes.push(cube_config);
+
+    cube_section
+}
+
+fn create_flat_plane_section(
+    app_state: Rc<RefCell<AppState>>,
+    flat_plane_count: usize,
+) -> gtk::Box {
+    let provider = CssProvider::new();
+    provider
+        .load_from_path("src/gui/style.css")
+        .expect("Failed to load CSS");
+
+    let flat_plane_section = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    let label_text = format!("Flat Plane {}", flat_plane_count);
+    let flat_plane_label = gtk::Label::new(Some(&label_text));
+    flat_plane_section.pack_start(&flat_plane_label, false, false, 0);
+    let style_context = flat_plane_label.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    let pos_x_entry = Entry::new();
+    pos_x_entry.set_placeholder_text(Some("X Position"));
+    flat_plane_section.pack_start(&pos_x_entry, false, false, 0);
+
+    let pos_y_entry = Entry::new();
+    pos_y_entry.set_placeholder_text(Some("Y Position"));
+    flat_plane_section.pack_start(&pos_y_entry, false, false, 0);
+
+    let pos_z_entry = Entry::new();
+    pos_z_entry.set_placeholder_text(Some("Z Position"));
+    flat_plane_section.pack_start(&pos_z_entry, false, false, 0);
+
+    let radius_entry = Entry::new();
+    radius_entry.set_placeholder_text(Some("Radius"));
+    flat_plane_section.pack_start(&radius_entry, false, false, 0);
+
+    // Apply styles to entries
+    let entries = vec![&pos_x_entry, &pos_y_entry, &pos_z_entry, &radius_entry];
+    for entry in entries {
+        let style_context = entry.get_style_context();
+        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+    }
+
+    let material_selector = ComboBoxText::new();
+    material_selector.append_text("Lambertian");
+    material_selector.append_text("Metal");
+    material_selector.append_text("Dielectric");
+    material_selector.set_active(Some(0));
+    flat_plane_section.pack_start(&material_selector, false, false, 0);
+
+    // Apply styles to ComboBoxText
+    let style_context = material_selector.get_style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
+
+    let flat_plane_config = FlatPlaneConfig {
+        pos_x_entry: Rc::new(RefCell::new(pos_x_entry)),
+        pos_y_entry: Rc::new(RefCell::new(pos_y_entry)),
+        pos_z_entry: Rc::new(RefCell::new(pos_z_entry)),
+        radius_entry: Rc::new(RefCell::new(radius_entry)),
+        material_selector: Rc::new(RefCell::new(material_selector)),
+    };
+    app_state.borrow_mut().flat_plane.push(flat_plane_config);
+
+    flat_plane_section
 }
